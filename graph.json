@@ -1,0 +1,146 @@
+{
+  "nodes": [
+    {
+      "id": "U01",
+      "label": "Asha (employee)",
+      "type": "user",
+      "criticality": "low",
+      "description": "Standard employee identity",
+      "x": 90,
+      "y": 180
+    },
+    {
+      "id": "D01",
+      "label": "Laptop-07",
+      "type": "device",
+      "criticality": "medium",
+      "description": "Employee endpoint; simulated compromise indicator",
+      "x": 260,
+      "y": 180
+    },
+    {
+      "id": "S01",
+      "label": "File Server",
+      "type": "server",
+      "criticality": "high",
+      "description": "Internal file server",
+      "x": 450,
+      "y": 90
+    },
+    {
+      "id": "S02",
+      "label": "App Server",
+      "type": "server",
+      "criticality": "medium",
+      "description": "Internal application server",
+      "x": 450,
+      "y": 270
+    },
+    {
+      "id": "U02",
+      "label": "Admin Account",
+      "type": "user",
+      "criticality": "high",
+      "description": "Privileged identity",
+      "x": 650,
+      "y": 90
+    },
+    {
+      "id": "A01",
+      "label": "Payroll App",
+      "type": "application",
+      "criticality": "high",
+      "description": "Business-critical application",
+      "x": 650,
+      "y": 270
+    },
+    {
+      "id": "DB01",
+      "label": "Payroll DB",
+      "type": "database",
+      "criticality": "critical",
+      "description": "Sensitive payroll database",
+      "x": 850,
+      "y": 180
+    },
+    {
+      "id": "D02",
+      "label": "Laptop-12",
+      "type": "device",
+      "criticality": "low",
+      "description": "Another employee endpoint",
+      "x": 260,
+      "y": 370
+    },
+    {
+      "id": "S03",
+      "label": "Print Server",
+      "type": "server",
+      "criticality": "low",
+      "description": "Low-criticality service",
+      "x": 450,
+      "y": 420
+    },
+    {
+      "id": "IP01",
+      "label": "External IP",
+      "type": "ip",
+      "criticality": "medium",
+      "description": "External network source",
+      "x": 80,
+      "y": 390
+    }
+  ],
+  "edges": [
+    {
+      "source": "U01",
+      "target": "D01",
+      "relation": "uses"
+    },
+    {
+      "source": "D01",
+      "target": "S01",
+      "relation": "connects_to"
+    },
+    {
+      "source": "D01",
+      "target": "S02",
+      "relation": "connects_to"
+    },
+    {
+      "source": "S01",
+      "target": "U02",
+      "relation": "admin_session"
+    },
+    {
+      "source": "S02",
+      "target": "A01",
+      "relation": "hosts"
+    },
+    {
+      "source": "U02",
+      "target": "A01",
+      "relation": "administers"
+    },
+    {
+      "source": "A01",
+      "target": "DB01",
+      "relation": "reads_from"
+    },
+    {
+      "source": "D02",
+      "target": "S03",
+      "relation": "connects_to"
+    },
+    {
+      "source": "IP01",
+      "target": "D01",
+      "relation": "network_event"
+    },
+    {
+      "source": "S03",
+      "target": "S02",
+      "relation": "shares_network"
+    }
+  ]
+}

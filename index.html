@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>GraphOps | Threat Investigation Workbench</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<header class="topbar">
+  <div><div class="eyebrow">SECURITY OPERATIONS / GRAPH ANALYTICS</div><h1>GraphOps<span>.</span></h1></div>
+  <div class="status"><i></i> DEMO ENVIRONMENT</div>
+</header>
+<main>
+  <section class="intro">
+    <div><p class="eyebrow">THREAT INVESTIGATION WORKBENCH</p><h2>From disconnected alerts<br>to connected incidents.</h2>
+    <p class="muted">Explore relationships, estimate potential impact, and inspect paths to critical assets using a transparent sample graph.</p></div>
+    <div class="notice"><strong>Simulation only</strong><br>All data is synthetic. Graph reachability is not proof of compromise.</div>
+  </section>
+
+  <section class="stats" id="stats">
+    <div class="stat"><span>GRAPH NODES</span><strong id="nodeCount">—</strong></div>
+    <div class="stat"><span>RELATIONSHIPS</span><strong id="edgeCount">—</strong></div>
+    <div class="stat"><span>OPEN SAMPLE ALERTS</span><strong id="alertCount">—</strong></div>
+    <div class="stat"><span>CRITICAL ASSETS</span><strong id="criticalCount">—</strong></div>
+  </section>
+
+  <section class="workspace">
+    <div class="panel graph-panel">
+      <div class="panel-head"><div><p class="eyebrow">01 / SECURITY GRAPH</p><h3>Connected environment</h3></div><span class="pill">SELECT A NODE</span></div>
+      <div class="legend"><span><i class="user"></i>User</span><span><i class="device"></i>Device</span><span><i class="server"></i>Server</span><span><i class="app"></i>App / DB</span><span><i class="ip"></i>IP</span></div>
+      <div class="graph-wrap"><svg id="graph" viewBox="0 0 960 500" role="img" aria-label="Interactive graph of simulated company assets"></svg></div>
+      <div class="graph-foot"><span id="selectedLabel">Select a node to inspect it.</span><button class="ghost" id="resetBtn">Reset highlights</button></div>
+    </div>
+    <aside class="panel inspector">
+      <p class="eyebrow">02 / INVESTIGATION</p><h3>Analyst console</h3>
+      <label for="sourceSelect">Potentially compromised asset</label><select id="sourceSelect"></select>
+      <button class="primary" id="blastBtn">Calculate blast radius</button>
+      <div id="blastResult" class="result empty">Choose an asset and calculate its potential 1–3 hop impact.</div>
+      <hr>
+      <label for="targetSelect">Critical target</label><select id="targetSelect"></select>
+      <button class="secondary" id="pathBtn">Find relationship path</button>
+      <div id="pathResult" class="result empty">Find a shortest relationship path to a selected target.</div>
+      <hr>
+      <button class="secondary full" id="chokeBtn">Show potential choke points</button>
+      <div id="chokeResult" class="result empty">Rank graph nodes by betweenness centrality.</div>
+    </aside>
+  </section>
+
+  <section class="lower-grid">
+    <div class="panel">
+      <div class="panel-head"><div><p class="eyebrow">03 / ALERT CORRELATION</p><h3>Connected alert investigator</h3></div><span class="pill" id="incidentTag">SAMPLE INCIDENT</span></div>
+      <p class="muted small" id="incidentSummary">Loading alerts…</p>
+      <div id="alerts" class="alerts"></div>
+    </div>
+    <div class="panel">
+      <p class="eyebrow">ANALYST NOTES</p><h3>How to interpret this view</h3>
+      <ul class="notes">
+        <li><b>Blast radius:</b> nodes reachable within three relationship hops in this demo graph.</li>
+        <li><b>Attack path:</b> shortest undirected relationship path, not proof that the route is exploitable.</li>
+        <li><b>Choke point:</b> a node with high betweenness centrality may connect otherwise separate areas.</li>
+        <li><b>Alert correlation:</b> sample alerts are linked through shared entities.</li>
+      </ul>
+      <div class="notice subtle">Production use would require authenticated telemetry, time-aware edges, access-control semantics, analyst feedback, and security testing.</div>
+    </div>
+  </section>
+  <footer>GRAPHOPS / PROTOTYPE BUILD 01 <span>Evidence-first security analytics</span></footer>
+</main>
+<script src="{{ url_for('static', filename='app.js') }}"></script>
+</body></html>
