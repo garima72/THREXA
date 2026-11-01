@@ -1,60 +1,217 @@
-# GraphOps — Threat Investigation Workbench
+# THREXA — Think in Graphs. Hunt Smarter.
 
-A runnable educational prototype for graph-based security investigation. It demonstrates three connected workflows using **synthetic data**:
+**A Graph-Powered Cyber Threat Analysis Platform**
 
-1. Connected Alert Investigator — displays sample alerts and the entities each alert references.
-2. Incident Impact Explorer — calculates the 1-, 2-, and 3-hop neighborhood around a selected node.
-3. Attack Path & Containment Planner — finds a shortest relationship path to a selected target and ranks potential choke points using betweenness centrality.
+THREXA is an educational cybersecurity investigation prototype developed by **Team QUBRIX** for the HackFront India AI Builder Challenge.
 
-## Requirements
+It demonstrates how graph analytics can help security analysts move beyond isolated security alerts and understand relationships between users, devices, servers, applications, and other infrastructure assets.
+
+By representing security entities as interconnected graph nodes, THREXA provides three investigation capabilities using synthetic security data.
+
+---
+
+## Core Features
+
+### 1. Connected Alert Investigator
+- Displays sample security alerts.
+- Identifies entities referenced by individual alerts.
+- Demonstrates how alerts can be connected through shared graph entities.
+- Provides a connected view of security-related information.
+
+### 2. Incident Impact Explorer
+- Select a potentially compromised device, account, or other graph node.
+- Explore its connected neighborhood across 1-hop, 2-hop, and 3-hop relationships.
+- Understand which assets may be structurally connected to the selected entity.
+- Visualize the potential scope of an incident.
+
+### 3. Attack Path & Containment Planner
+- Explore the shortest relationship path between a selected source and target.
+- Identify intermediate systems connecting potentially compromised assets to critical infrastructure.
+- Rank potential choke points using betweenness centrality.
+- Help analysts understand important connections within the infrastructure graph.
+
+---
+
+## Technology Stack
+
+| Component | Technology |
+|---|---|
+| Backend | Python, Flask |
+| Graph Analytics | NetworkX |
+| Frontend | HTML, CSS, JavaScript |
+| Data Storage | JSON |
+| Visualization | SVG / JavaScript |
+
+---
+
+## Project Structure
+THREXA/
+│
+├── app.py
+├── requirements.txt
+│
+├── data/
+│   ├── graph.json
+│   └── alerts.json
+│
+├── templates/
+│   └── index.html
+│
+├── static/
+│   ├── style.css
+│   └── app.js
+│
+└── README.md
+
+
+---
+
+## Getting Started
+
+### Requirements
 - Python 3.10 or newer
 - pip
 
-## Run locally
+### 1. Clone the repository
+
 ```bash
-# 1. Extract the ZIP and open the GraphOps_Submission folder
-# 2. (Recommended) create a virtual environment
+git clone YOUR_GITHUB_REPOSITORY_URL
+cd YOUR_REPOSITORY_FOLDER
+```
+
+Replace the placeholders with your actual GitHub repository URL and folder name.
+
+### 2. Create a virtual environment
+
+```bash
 python -m venv .venv
+```
 
-# Windows PowerShell:
+Activate it:
+
+**Windows PowerShell**
+```powershell
 .venv\Scripts\Activate.ps1
-# macOS/Linux:
+```
+
+**macOS / Linux**
+```bash
 source .venv/bin/activate
+```
 
-# 3. Install dependencies
+### 3. Install dependencies
+
+```bash
 pip install -r requirements.txt
+```
 
-# 4. Start the app
+### 4. Run the application
+
+```bash
 python app.py
 ```
-Open http://127.0.0.1:5000 in a browser.
 
-## Demo walkthrough
-1. The graph loads with a simulated employee laptop `D01` selected.
-2. Click **Calculate blast radius**. Review the reachable nodes by hop count.
-3. Set the critical target to **Payroll DB (DB01)** and click **Find relationship path**.
-4. Click **Show potential choke points** to see nodes with high betweenness centrality.
-5. Review the sample alerts and their related graph entities.
+### 5. Open in your browser
 
-## API endpoints
-- `GET /api/graph` — graph nodes and edges
-- `GET /api/alerts` — synthetic alert records
-- `GET /api/incident` — alert/entity correlation view
-- `GET /api/blast-radius/<node_id>` — reachable neighborhood up to three hops
-- `GET /api/attack-path?source=D01&target=DB01` — shortest undirected relationship path
-- `GET /api/choke-points` — top nodes by betweenness centrality
+Visit:
 
-## Data model
-Nodes represent users, devices, servers, applications, databases, and IP addresses. Edges represent relationships such as `uses`, `connects_to`, `admin_session`, `hosts`, and `reads_from`. The graph and alerts are stored in JSON under `data/`, making the demo easy to inspect and modify.
+http://127.0.0.1:5000
 
-## Important limitations
-- All telemetry and alerts are fabricated for demonstration. No real organization data is collected.
-- Relationships are treated as traversable in either direction for blast-radius and shortest-path demonstrations. A production engine must preserve direction, permissions, time, and relationship semantics.
-- A graph path is not proof that an attacker traversed or can exploit that path.
-- Betweenness centrality is a structural graph metric, not a validated security-risk score.
-- Alert correlation is based on shared entity IDs in a fixed sample, not a trained or production detection system.
-- This prototype does not connect to a SIEM, EDR, CMDB, identity provider, or live network.
-- Do not use it to make real containment decisions.
+---
 
-## Suggested next steps
-Add time-stamped edges, direction-aware path rules, real (authorized) telemetry connectors, analyst feedback, authentication, automated tests, and a security review before any operational use.
+## Demo Walkthrough
+
+Follow these steps to explore THREXA:
+
+1. Launch the application and explore the sample security graph.
+2. Open the **Connected Alert Investigator** and review the sample alerts and their associated entities.
+3. Select `D01` (Laptop-07) in the Incident Impact Explorer.
+4. Click **Calculate Blast Radius** to explore the connected neighborhood by hop count.
+5. Select `DB01` (Payroll DB) as the target in the Attack Path Finder.
+6. Click **Find Relationship Path** to explore the shortest relationship path.
+7. Open **Potential Choke Points** to view nodes ranked by betweenness centrality.
+
+---
+
+## API Endpoints
+
+| Method | Endpoint | Description |
+|---|---|---|
+| GET | `/api/graph` | Returns graph nodes and edges |
+| GET | `/api/alerts` | Returns synthetic security alerts |
+| GET | `/api/incident` | Provides alert/entity correlation information |
+| GET | `/api/blast-radius/<node_id>` | Calculates the neighborhood up to three hops |
+| GET | `/api/attack-path?source=D01&target=DB01` | Finds the shortest undirected relationship path |
+| GET | `/api/choke-points` | Returns nodes ranked by betweenness centrality |
+
+---
+
+## Graph Data Model
+
+THREXA represents an organization's digital infrastructure as a graph.
+
+**Node types include:**
+- Users
+- Devices
+- Servers
+- Applications
+- Databases
+- IP addresses
+
+**Relationship types include:**
+- `uses`
+- `connects_to`
+- `admin_session`
+- `hosts`
+- `reads_from`
+
+The graph structure and sample alerts are stored in JSON files under the `data/` directory.
+
+This makes the prototype easy to inspect, modify, and extend.
+
+---
+
+## Important Limitations
+
+THREXA is currently an educational prototype, not a production cybersecurity platform.
+
+- All telemetry, alerts, and graph relationships are synthetic and created for demonstration.
+- Relationships are treated as traversable in either direction for blast-radius and shortest-path demonstrations.
+- A discovered graph path does not prove that an attacker has traversed or can exploit that path.
+- Betweenness centrality measures structural importance in a graph; it is not a validated security-risk score.
+- Alert correlation uses shared entity IDs in a fixed sample dataset, not a trained detection model.
+- The prototype does not connect to live SIEM, EDR, CMDB, identity-provider, or network systems.
+- It does not execute automated containment actions.
+- Its outputs should not be used to make real-world security or containment decisions.
+
+---
+
+## Future Scope
+
+Potential improvements include:
+
+- Direction-aware and time-stamped graph relationships.
+- Integration with authorized SIEM, EDR, CMDB, and identity telemetry.
+- More advanced attack-path analysis.
+- Improved anomaly detection and alert correlation.
+- Analyst feedback and investigation history.
+- Authentication and role-based access control.
+- Automated testing and performance optimization.
+
+---
+
+## Team
+
+**Developed by Team QUBRIX**
+
+Project: **THREXA**
+
+Hackathon: **HackFront India — AI Builder Challenge**
+
+**Think in Graphs. Hunt Smarter.**
+
+---
+
+<p align="center">
+  Built with curiosity, collaboration, and a passion for cybersecurity.
+</p>
