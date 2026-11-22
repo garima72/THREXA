@@ -163,7 +163,7 @@ def incident():
         "summary": "Alerts are grouped by shared entity identifiers in the demonstration dataset.",
         "backend": backend,
         "note": "Synthetic-data correlation, not a production detection engine."})
-},
+
                    
 
     
