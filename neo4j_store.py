@@ -11,17 +11,22 @@ class Neo4jStore:
         self.uri = os.getenv("NEO4J_URI", "").strip()
         self.username = os.getenv("NEO4J_USERNAME", "neo4j")
         self.password = os.getenv("NEO4J_PASSWORD", "")
-        self.database = os.getenv("NEO4J_DATABASE", "neo4j")
+        self.database = os.getenv("NEO4J_DATABASE", "").strip() or None
         self.driver = None
         if self.uri and self.password:
             self.driver = GraphDatabase.driver(
                 self.uri, auth=(self.username, self.password),
-                connection_timeout=4, max_connection_pool_size=20
+                connection_timeout=5, max_connection_pool_size=20
             )
 
     @property
     def configured(self):
         return self.driver is not None
+
+    def _get_session(self):
+        if self.database:
+            return self.driver.session(database=self.database)
+        return self.driver.session()
 
     def verify(self):
         if not self.driver:
@@ -30,10 +35,10 @@ class Neo4jStore:
                     "message": "Neo4j credentials are not configured; using local JSON data."}
         try:
             self.driver.verify_connectivity()
-            with self.driver.session(database=self.database) as session:
+            with self._get_session() as session:
                 record = session.run("RETURN 1 AS ok").single()
             return {"configured": True, "connected": bool(record and record["ok"] == 1),
-                    "mode": "neo4j", "database": self.database,
+                    "mode": "neo4j", "database": self.database or "default",
                     "message": "Connected to Neo4j."}
         except Exception as exc:
             # Always return quickly so the UI does not stay stuck on "checking"
@@ -44,7 +49,7 @@ class Neo4jStore:
     def import_dataset(self, graph_data, alerts):
         if not self.driver:
             raise RuntimeError("Neo4j is not configured. Set NEO4J_URI and NEO4J_PASSWORD.")
-        with self.driver.session(database=self.database) as session:
+        with self._get_session() as session:
             # Run schema DDL as auto-commit statements before the data transaction.
             session.run("CREATE CONSTRAINT entity_id IF NOT EXISTS FOR (n:Entity) REQUIRE n.id IS UNIQUE").consume()
             session.run("CREATE CONSTRAINT alert_id IF NOT EXISTS FOR (a:Alert) REQUIRE a.id IS UNIQUE").consume()
@@ -90,7 +95,7 @@ class Neo4jStore:
             return session.execute_write(tx_import)
 
     def fetch_graph(self):
-        with self.driver.session(database=self.database) as session:
+        with self._get_session() as session:
             nodes = [dict(record["node"]) for record in session.run("""
                 MATCH (n:Entity) RETURN n {.*} AS node ORDER BY n.id
             """)]
@@ -111,7 +116,7 @@ class Neo4jStore:
     def _read(self, query, **params):
         def work(tx):
             return [record.data() for record in tx.run(query, **params)]
-        with self.driver.session(database=self.database) as session:
+        with self._get_session() as session:
             return session.execute_read(work)
 
     def graph_totals(self):
@@ -144,7 +149,7 @@ class Neo4jStore:
         return edges
 
     def fetch_alerts(self):
-        with self.driver.session(database=self.database) as session:
+        with self._get_session() as session:
             rows = session.run("""
                 MATCH (a:Alert)
                 OPTIONAL MATCH (e:Entity)-[:MENTIONED_IN]->(a)
