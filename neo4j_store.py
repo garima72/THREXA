@@ -11,22 +11,17 @@ class Neo4jStore:
         self.uri = os.getenv("NEO4J_URI", "").strip()
         self.username = os.getenv("NEO4J_USERNAME", "neo4j")
         self.password = os.getenv("NEO4J_PASSWORD", "")
-        self.database = os.getenv("NEO4J_DATABASE", "").strip() or None
+        self.database = os.getenv("NEO4J_DATABASE", "neo4j")
         self.driver = None
         if self.uri and self.password:
             self.driver = GraphDatabase.driver(
                 self.uri, auth=(self.username, self.password),
-                connection_timeout=5, max_connection_pool_size=20
+                connection_timeout=4, max_connection_pool_size=20
             )
 
     @property
     def configured(self):
         return self.driver is not None
-
-    def _get_session(self):
-        if self.database:
-            return self.driver.session(database=self.database)
-        return self.driver.session()
 
     def verify(self):
         if not self.driver:
@@ -35,10 +30,10 @@ class Neo4jStore:
                     "message": "Neo4j credentials are not configured; using local JSON data."}
         try:
             self.driver.verify_connectivity()
-            with self._get_session() as session:
+            with self.driver.session(database=self.database) as session:
                 record = session.run("RETURN 1 AS ok").single()
             return {"configured": True, "connected": bool(record and record["ok"] == 1),
-                    "mode": "neo4j", "database": self.database or "default",
+                    "mode": "neo4j", "database": self.database,
                     "message": "Connected to Neo4j."}
         except Exception as exc:
             # Always return quickly so the UI does not stay stuck on "checking"
@@ -49,10 +44,11 @@ class Neo4jStore:
     def import_dataset(self, graph_data, alerts):
         if not self.driver:
             raise RuntimeError("Neo4j is not configured. Set NEO4J_URI and NEO4J_PASSWORD.")
-        with self._get_session() as session:
+        with self.driver.session(database=self.database) as session:
             # Run schema DDL as auto-commit statements before the data transaction.
             session.run("CREATE CONSTRAINT entity_id IF NOT EXISTS FOR (n:Entity) REQUIRE n.id IS UNIQUE").consume()
             session.run("CREATE CONSTRAINT alert_id IF NOT EXISTS FOR (a:Alert) REQUIRE a.id IS UNIQUE").consume()
+            session.run("CREATE INDEX entity_criticality IF NOT EXISTS FOR (n:Entity) ON (n.criticality)").consume()
             def tx_import(tx):
                 for node in graph_data["nodes"]:
                     tx.run("""
@@ -94,7 +90,7 @@ class Neo4jStore:
             return session.execute_write(tx_import)
 
     def fetch_graph(self):
-        with self._get_session() as session:
+        with self.driver.session(database=self.database) as session:
             nodes = [dict(record["node"]) for record in session.run("""
                 MATCH (n:Entity) RETURN n {.*} AS node ORDER BY n.id
             """)]
@@ -105,8 +101,50 @@ class Neo4jStore:
             """)]
             return {"nodes": nodes, "edges": edges}
 
+    # ------------------------------------------------------------------
+    # Targeted, index-backed reads used by the Shadow Graph simulation.
+    # They touch only the ids they are given, so cost scales with the
+    # attacker's frontier, not with the size of the whole graph.
+    # ------------------------------------------------------------------
+    _NODE_PROPS = "{.id, .label, .type, .criticality, .description}"
+
+    def _read(self, query, **params):
+        def work(tx):
+            return [record.data() for record in tx.run(query, **params)]
+        with self.driver.session(database=self.database) as session:
+            return session.execute_read(work)
+
+    def graph_totals(self):
+        """Whole-graph counts (label/type count-store lookups plus one grouped scan)."""
+        nodes = self._read("MATCH (n:Entity) RETURN count(n) AS c")[0]["c"]
+        edges = self._read("MATCH ()-[r:RELATION]->() RETURN count(r) AS c")[0]["c"]
+        by_crit = {row["c"] or "medium": row["k"] for row in self._read(
+            "MATCH (n:Entity) RETURN n.criticality AS c, count(*) AS k")}
+        return {"nodes": nodes, "edges": edges, "by_criticality": by_crit}
+
+    def fetch_entities(self, ids, chunk=1000):
+        ids, found = list(ids), {}
+        for i in range(0, len(ids), chunk):
+            for row in self._read(
+                    f"MATCH (n:Entity) WHERE n.id IN $ids RETURN n {self._NODE_PROPS} AS node",
+                    ids=ids[i:i + chunk]):
+                found[row["node"]["id"]] = row["node"]
+        return found
+
+    def fetch_out_edges(self, ids, chunk=1000):
+        """Outgoing relationships for a batch of node ids, with target node properties."""
+        ids, edges = list(ids), []
+        for i in range(0, len(ids), chunk):
+            edges.extend(self._read(f"""
+                MATCH (s:Entity)-[r:RELATION]->(t:Entity)
+                WHERE s.id IN $ids
+                RETURN s.id AS source, t.id AS target, r.relation AS relation,
+                       r.id AS id, t {self._NODE_PROPS} AS target_node
+            """, ids=ids[i:i + chunk]))
+        return edges
+
     def fetch_alerts(self):
-        with self._get_session() as session:
+        with self.driver.session(database=self.database) as session:
             rows = session.run("""
                 MATCH (a:Alert)
                 OPTIONAL MATCH (e:Entity)-[:MENTIONED_IN]->(a)
