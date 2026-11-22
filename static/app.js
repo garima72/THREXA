@@ -939,6 +939,9 @@ async function init() {
     } catch (e) {
       console.error("Cytoscape initialization failed:", e);
     }
+    if (window.ShadowGraph) {
+      window.ShadowGraph.init(graphData);
+    }
 
     try {
       await loadAlerts();
