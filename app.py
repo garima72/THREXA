@@ -5,12 +5,12 @@ import json, os
 import networkx as nx
 from dotenv import load_dotenv
 from neo4j_store import Neo4jStore
+from shadow import SourceProvider, create_shadow_blueprint
 
 load_dotenv()
 app = Flask(__name__)
 BASE = Path(__file__).resolve().parent
 store = Neo4jStore()
-_shadow_sessions = {}
 _analyst_sessions = defaultdict(set)
 
 CRITICALITY = {"low": 0.25, "medium": 0.5, "high": 0.75, "critical": 1.0}
@@ -64,6 +64,10 @@ def node_payload(node_id, attrs):
 
 def json_error(message, status=400):
     return jsonify({"error": message}), status
+
+# Shadow Graph (attacker vs. defender view). Lives in shadow.py; the old
+# in-app version sat inside the disabled block below and is superseded.
+app.register_blueprint(create_shadow_blueprint(SourceProvider(store, BASE / "data" / "graph.json")))
 
 @app.route("/")
 def home():
@@ -159,33 +163,121 @@ def incident():
         "summary": "Alerts are grouped by shared entity identifiers in the demonstration dataset.",
         "backend": backend,
         "note": "Synthetic-data correlation, not a production detection engine."})
+},
+                   
 
-@app.post("/api/blast-shield/simulate")
-def blast_shield_simulate():
+    
+
+
+@app.post("/api/isolation/preview")
+def isolation_preview():
     body = request.get_json(silent=True) or {}
-    source, target, edge_id = body.get("source", "D01"), body.get("target", "DB01"), body.get("edge_id")
+    node_id = body.get("node_id")
+    path_source = body.get("path_source", "D01")  # typical compromised entry point
+    if not node_id:
+        return json_error("node_id is required.")
+
+    graph, _, backend = build_graph()
+    if node_id not in graph:
+        return json_error(f"Unknown node: {node_id}", 404)
+
+    undirected = graph.to_undirected()
+    # Single source BFS — scales with graph size, not with number of services
     try:
-        result = blast_shield_analysis(source, target)
-    except ValueError as exc:
-        return json_error(str(exc))
-    candidate = next((x for x in result["candidates"] if x["id"] == edge_id), None)
-    if not candidate:
-        return json_error("Unknown candidate edge_id.")
-    graph, _, _ = build_graph()
-    model = graph.to_undirected()
-    model.remove_edge(candidate["source"], candidate["target"], key=candidate["id"])
-    still_connected = nx.has_path(model, source, target)
-    try:
-        remaining_paths = len(list(nx.all_simple_edge_paths(model, source, target,
-                              cutoff=min(8, max(len(model)-1, 1)))))
-    except nx.NetworkXNoPath:
-        remaining_paths = 0
-    return jsonify({"removed_edge_in_simulation": candidate,
-        "source": source, "target": target, "still_connected": still_connected,
-        "remaining_paths": remaining_paths,
-        "disrupted_paths": max(result["total_paths"]-remaining_paths, 0),
-        "note": "This is an in-memory what-if simulation only. The stored graph and real infrastructure are unchanged."})
+        distances = nx.single_source_shortest_path_length(undirected, node_id, cutoff=5)
+    except Exception:
+        distances = {}
+
+    services = []
+    for n, attrs in graph.nodes(data=True):
+        if attrs.get("type") == "business_service" and n in distances and n != node_id:
+            services.append((n, attrs, distances[n]))
+
+    impacted_services = []
+    for svc_id, attrs, hops in services:
+        # Simulate isolation: remove the node and see if the service still has
+        # a path to at least one of its original direct dependencies (excluding the isolated node)
+        temp = undirected.copy()
+        if node_id in temp:
+            temp.remove_node(node_id)
+
+        direct_deps = [nbr for nbr in undirected.neighbors(svc_id) if nbr != node_id]
+        still_supported = False
+        lost_deps = []
+        for dep in direct_deps:
+            if dep not in temp:
+                lost_deps.append(dep)
+                continue
+            if nx.has_path(temp, svc_id, dep):
+                still_supported = True
+            else:
+                lost_deps.append(dep)
+
+        # If the isolated node itself was a direct dependency, it is lost
+        if node_id in undirected.neighbors(svc_id):
+            lost_deps.append(node_id)
+
+        viable = still_supported and not (node_id in undirected.neighbors(svc_id) and len(direct_deps) == 0)
+        # More precise: service is impacted if it loses all paths to its key supporting assets
+        # or if it had a direct dependency on the isolated node
+        is_impacted = (node_id in undirected.neighbors(svc_id)) or (not still_supported and direct_deps)
+
+        impacted_services.append({
+            "service": node_payload(svc_id, attrs),
+            "dependency_hops": hops,
+            "is_impacted": bool(is_impacted),
+            "still_viable": not is_impacted,
+            "lost_direct_dependencies": [node_payload(d, graph.nodes[d]) for d in set(lost_deps) if d in graph],
+            "reason": ("Direct dependency removed" if node_id in undirected.neighbors(svc_id)
+                       else "Supporting path broken" if is_impacted else "Alternative dependencies remain")
+        })
+
+    # Attack paths cut: from path_source to critical / high-value assets
+    critical_targets = [
+        n for n, a in graph.nodes(data=True)
+        if a.get("criticality") in ("critical", "high")
+        and a.get("type") in ("database", "application", "server", "business_service")
+        and n != node_id and n != path_source
+    ]
+    paths_cut = []
+    for tgt in critical_targets[:12]:  # hard limit for responsiveness
+        before = path_source in undirected and nx.has_path(undirected, path_source, tgt)
+        if not before:
+            continue
+        temp = undirected.copy()
+        if node_id in temp:
+            temp.remove_node(node_id)
+        after = (path_source in temp and tgt in temp and nx.has_path(temp, path_source, tgt))
+        if before and not after:
+            paths_cut.append({
+                "target": node_payload(tgt, graph.nodes[tgt]),
+                "cut": True
+            })
+
+    impacted_count = sum(1 for s in impacted_services if s["is_impacted"])
+    summary_parts = []
+    if impacted_count:
+        labels = [s["service"]["label"] for s in impacted_services if s["is_impacted"]][:3]
+        summary_parts.append(f"Isolating this asset would impact {impacted_count} business service(s): {', '.join(labels)}")
+    else:
+        summary_parts.append("No business services appear to depend on this asset within 5 hops.")
+    if paths_cut:
+        summary_parts.append(f"{len(paths_cut)} modeled attack path(s) to critical assets would be cut.")
+    else:
+        summary_parts.append("No additional critical paths from the selected source would be severed.")
+
+    return jsonify({
+        "isolated_node": node_payload(node_id, graph.nodes[node_id]),
+        "path_source": path_source,
+        "impacted_services": impacted_services,
+        "paths_cut": paths_cut,
+        "summary": " ".join(summary_parts),
+        "backend": backend,
+        "note": "Preview only. Isolation is simulated in memory. Review with operators before any real containment action. Dependency depth limited to 5 hops for performance."
+    })
 
 if __name__ == "__main__":
     app.run(debug=os.getenv("FLASK_DEBUG", "false").lower() == "true",
-            host="0.0.0.0", port=int(os.getenv("PORT", "5000")))
+            host="127.0.0.1", port=int(os.getenv("PORT", "5000")))
+
+    
