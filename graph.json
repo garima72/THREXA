@@ -1,146 +1,61 @@
 {
   "nodes": [
-    {
-      "id": "U01",
-      "label": "Asha (employee)",
-      "type": "user",
-      "criticality": "low",
-      "description": "Standard employee identity",
-      "x": 90,
-      "y": 180
-    },
-    {
-      "id": "D01",
-      "label": "Laptop-07",
-      "type": "device",
-      "criticality": "medium",
-      "description": "Employee endpoint; simulated compromise indicator",
-      "x": 260,
-      "y": 180
-    },
-    {
-      "id": "S01",
-      "label": "File Server",
-      "type": "server",
-      "criticality": "high",
-      "description": "Internal file server",
-      "x": 450,
-      "y": 90
-    },
-    {
-      "id": "S02",
-      "label": "App Server",
-      "type": "server",
-      "criticality": "medium",
-      "description": "Internal application server",
-      "x": 450,
-      "y": 270
-    },
-    {
-      "id": "U02",
-      "label": "Admin Account",
-      "type": "user",
-      "criticality": "high",
-      "description": "Privileged identity",
-      "x": 650,
-      "y": 90
-    },
-    {
-      "id": "A01",
-      "label": "Payroll App",
-      "type": "application",
-      "criticality": "high",
-      "description": "Business-critical application",
-      "x": 650,
-      "y": 270
-    },
-    {
-      "id": "DB01",
-      "label": "Payroll DB",
-      "type": "database",
-      "criticality": "critical",
-      "description": "Sensitive payroll database",
-      "x": 850,
-      "y": 180
-    },
-    {
-      "id": "D02",
-      "label": "Laptop-12",
-      "type": "device",
-      "criticality": "low",
-      "description": "Another employee endpoint",
-      "x": 260,
-      "y": 370
-    },
-    {
-      "id": "S03",
-      "label": "Print Server",
-      "type": "server",
-      "criticality": "low",
-      "description": "Low-criticality service",
-      "x": 450,
-      "y": 420
-    },
-    {
-      "id": "IP01",
-      "label": "External IP",
-      "type": "ip",
-      "criticality": "medium",
-      "description": "External network source",
-      "x": 80,
-      "y": 390
-    }
+    {"id": "IP01", "label": "External IP 185.x", "type": "ip", "criticality": "high", "description": "Suspicious external source (phishing C2)", "x": 40, "y": 200},
+    {"id": "U01", "label": "Asha (Employee)", "type": "user", "criticality": "low", "description": "Standard employee – victim of phishing", "x": 180, "y": 120},
+    {"id": "D01", "label": "Laptop-07", "type": "device", "criticality": "medium", "description": "Compromised employee endpoint", "x": 320, "y": 120},
+    {"id": "D02", "label": "Laptop-12", "type": "device", "criticality": "low", "description": "Secondary employee endpoint", "x": 180, "y": 320},
+    {"id": "D03", "label": "Admin Workstation", "type": "device", "criticality": "high", "description": "Privileged admin machine", "x": 480, "y": 40},
+    {"id": "S01", "label": "File Server", "type": "server", "criticality": "high", "description": "Internal file share server", "x": 500, "y": 180},
+    {"id": "S02", "label": "App Server", "type": "server", "criticality": "medium", "description": "Application hosting server", "x": 500, "y": 280},
+    {"id": "S03", "label": "Print Server", "type": "server", "criticality": "low", "description": "Low-priority print service", "x": 320, "y": 380},
+    {"id": "S04", "label": "Email Server", "type": "server", "criticality": "high", "description": "Corporate email system", "x": 360, "y": 40},
+    {"id": "S05", "label": "VPN Gateway", "type": "server", "criticality": "high", "description": "Remote access gateway", "x": 200, "y": 200},
+    {"id": "U02", "label": "Admin Account", "type": "user", "criticality": "high", "description": "Privileged domain admin", "x": 680, "y": 100},
+    {"id": "U03", "label": "Finance User", "type": "user", "criticality": "medium", "description": "Payroll application user", "x": 680, "y": 320},
+    {"id": "A01", "label": "Payroll App", "type": "application", "criticality": "high", "description": "Business-critical payroll application", "x": 820, "y": 220},
+    {"id": "A02", "label": "HR Portal", "type": "application", "criticality": "medium", "description": "Internal HR system", "x": 820, "y": 340},
+    {"id": "DB01", "label": "Payroll DB", "type": "database", "criticality": "critical", "description": "Sensitive employee payroll database", "x": 980, "y": 180},
+    {"id": "DB02", "label": "HR Database", "type": "database", "criticality": "high", "description": "Employee records database", "x": 980, "y": 300},
+    {"id": "DB03", "label": "Backup Store", "type": "database", "criticality": "medium", "description": "Offline backup repository", "x": 980, "y": 420},
+    {"id": "S06", "label": "Domain Controller", "type": "server", "criticality": "critical", "description": "Active Directory domain controller", "x": 640, "y": 40},
+    {"id": "IP02", "label": "Secondary C2 IP", "type": "ip", "criticality": "high", "description": "Additional command-and-control host", "x": 40, "y": 320},
+    {"id": "BS01", "label": "Payroll Processing", "type": "business_service", "criticality": "critical", "description": "Monthly employee payroll run and payments", "x": 1100, "y": 140},
+    {"id": "BS02", "label": "HR Self-Service", "type": "business_service", "criticality": "medium", "description": "Employee access to HR records and requests", "x": 1100, "y": 280},
+    {"id": "BS03", "label": "Corporate Email", "type": "business_service", "criticality": "high", "description": "Email, calendar, and collaboration", "x": 200, "y": 40}
   ],
   "edges": [
-    {
-      "source": "U01",
-      "target": "D01",
-      "relation": "uses"
-    },
-    {
-      "source": "D01",
-      "target": "S01",
-      "relation": "connects_to"
-    },
-    {
-      "source": "D01",
-      "target": "S02",
-      "relation": "connects_to"
-    },
-    {
-      "source": "S01",
-      "target": "U02",
-      "relation": "admin_session"
-    },
-    {
-      "source": "S02",
-      "target": "A01",
-      "relation": "hosts"
-    },
-    {
-      "source": "U02",
-      "target": "A01",
-      "relation": "administers"
-    },
-    {
-      "source": "A01",
-      "target": "DB01",
-      "relation": "reads_from"
-    },
-    {
-      "source": "D02",
-      "target": "S03",
-      "relation": "connects_to"
-    },
-    {
-      "source": "IP01",
-      "target": "D01",
-      "relation": "network_event"
-    },
-    {
-      "source": "S03",
-      "target": "S02",
-      "relation": "shares_network"
-    }
+    {"source": "IP01", "target": "D01", "relation": "network_event"},
+    {"source": "IP02", "target": "D01", "relation": "network_event"},
+    {"source": "U01", "target": "D01", "relation": "uses"},
+    {"source": "U01", "target": "S04", "relation": "uses"},
+    {"source": "D01", "target": "S05", "relation": "connects_to"},
+    {"source": "D01", "target": "S01", "relation": "connects_to"},
+    {"source": "D01", "target": "S02", "relation": "connects_to"},
+    {"source": "D01", "target": "S03", "relation": "connects_to"},
+    {"source": "D02", "target": "S03", "relation": "connects_to"},
+    {"source": "D03", "target": "S06", "relation": "admin_session"},
+    {"source": "S01", "target": "U02", "relation": "admin_session"},
+    {"source": "S02", "target": "A01", "relation": "hosts"},
+    {"source": "S02", "target": "A02", "relation": "hosts"},
+    {"source": "U02", "target": "A01", "relation": "administers"},
+    {"source": "U02", "target": "S06", "relation": "administers"},
+    {"source": "U03", "target": "A01", "relation": "uses"},
+    {"source": "U03", "target": "A02", "relation": "uses"},
+    {"source": "A01", "target": "DB01", "relation": "reads_from"},
+    {"source": "A01", "target": "DB02", "relation": "reads_from"},
+    {"source": "A02", "target": "DB02", "relation": "reads_from"},
+    {"source": "S01", "target": "DB03", "relation": "connects_to"},
+    {"source": "S06", "target": "U02", "relation": "hosts"},
+    {"source": "S05", "target": "S06", "relation": "connects_to"},
+    {"source": "S03", "target": "S02", "relation": "shares_network"},
+    {"source": "D03", "target": "S01", "relation": "connects_to"},
+    {"source": "S04", "target": "D01", "relation": "connects_to"},
+    {"source": "BS01", "target": "A01", "relation": "depends_on"},
+    {"source": "BS01", "target": "DB01", "relation": "depends_on"},
+    {"source": "BS01", "target": "S02", "relation": "depends_on"},
+    {"source": "BS02", "target": "A02", "relation": "depends_on"},
+    {"source": "BS02", "target": "DB02", "relation": "depends_on"},
+    {"source": "BS03", "target": "S04", "relation": "depends_on"},
+    {"source": "BS03", "target": "U01", "relation": "depends_on"}
   ]
 }
