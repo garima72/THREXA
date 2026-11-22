@@ -34,7 +34,6 @@
     <div class="stat"><span>OPEN ALERTS</span><strong id="alertCount">—</strong></div>
     <div class="stat"><span>CRITICAL ASSETS</span><strong id="criticalCount">—</strong></div>
   </section>
-
   <section class="workspace">
     <div class="panel graph-panel">
       <div class="panel-head">
@@ -49,6 +48,7 @@
         <span><i class="device"></i>Device</span>
         <span><i class="server"></i>Server</span>
         <span><i class="app"></i>App / DB</span>
+        <span><i class="service"></i>Business Service</span>
         <span><i class="ip"></i>IP</span>
       </div>
       <div id="cy" class="graph-wrap"></div>
@@ -80,7 +80,70 @@
 
       <button class="secondary" id="chokeBtn">Rank choke points</button>
       <div id="chokeResult" class="result empty">Structural centrality ranking.</div>
+
+      <hr style="border: none; border-top: 1px solid #29383d; margin: 1.2rem 0;">
+      <p class="eyebrow">SAFE TO ISOLATE?</p>
+      <button class="primary" id="isolationBtn">Preview isolation impact</button>
+      <div id="isolationResult" class="result empty">Select an asset and preview which business services and attack paths would be affected.</div>
     </aside>
+  </section>
+  <section class="panel shadow-panel" id="shadowSection" aria-labelledby="shadowTitle">
+    <div class="panel-head">
+      <div>
+        <p class="eyebrow">04 / SHADOW GRAPH</p>
+        <h3 id="shadowTitle">What the attacker sees vs. what IT sees</h3>
+      </div>
+      <span class="pill" id="shadowBackendTag">DIRECTED DISCOVERY • PER-SESSION OVERLAY</span>
+    </div>
+    <p class="muted small">The attacker starts from one foothold and discovers the network hop by hop. The left panel is the complete map IT holds; the right panel is the attacker&rsquo;s partial map, drawn at the same positions so the gap is visible.</p>
+
+    <div class="shadow-controls">
+      <div class="shadow-field">
+        <label for="shadowStart">Attacker foothold</label>
+        <select id="shadowStart"></select>
+      </div>
+      <button class="primary" id="shadowStartBtn">Start simulation</button>
+      <button class="secondary" id="shadowNextBtn" disabled>Next attack step &#9656;</button>
+      <button class="secondary" id="shadowAutoBtn" aria-pressed="false" disabled>&#9654; Auto-play</button>
+      <button class="secondary" id="shadowAllBtn" disabled>Run to end</button>
+      <button class="ghost" id="shadowResetBtn" disabled>Reset</button>
+    </div>
+
+    <div class="asym" role="group" aria-label="Information asymmetry" aria-live="polite">
+      <div class="asym-tile it"><span>IT KNOWS ABOUT</span><strong id="asymTotal">&mdash;</strong><small>entities in the environment</small></div>
+      <div class="asym-tile atk"><span>ATTACKER HAS FOUND</span><strong id="asymFound">&mdash;</strong><small id="asymFoundNote">start a simulation</small></div>
+      <div class="asym-tile blind"><span>ATTACKER BLIND SPOTS</span><strong id="asymBlind">&mdash;</strong><small id="asymBlindNote">entities the attacker has not found yet</small></div>
+    </div>
+    <p class="shadow-meta" id="shadowMeta">No simulation running.</p>
+    <p class="shadow-status" id="shadowStatus" role="status"></p>
+
+    <div class="shadow-split">
+      <figure class="shadow-pane defender">
+        <figcaption><b>DEFENDER VIEW</b><span>everything IT knows &middot; grey = not yet found</span></figcaption>
+        <div id="shadowDefender" class="shadow-cy" role="img" aria-label="Defender view: the complete network graph with attacker-discovered entities highlighted"></div>
+      </figure>
+      <figure class="shadow-pane attacker">
+        <figcaption><b>ATTACKER VIEW</b><span>only what has been discovered</span></figcaption>
+        <div id="shadowAttacker" class="shadow-cy" role="img" aria-label="Attacker view: the partial graph the simulated attacker has discovered so far"></div>
+      </figure>
+    </div>
+
+    <div class="shadow-legend">
+      <span><i class="lg-unseen"></i>Not yet found</span>
+      <span><i class="lg-found"></i>At risk (discovered)</span>
+      <span><i class="lg-fresh"></i>Newly found this step</span>
+      <span><i class="lg-entry"></i>Foothold</span>
+      <span><i class="lg-crit"></i>Critical asset (diamond)</span>
+    </div>
+
+    <div class="shadow-foot">
+      <ol id="shadowLog" class="shadow-log" aria-label="Attack timeline"><li class="empty">No simulation running.</li></ol>
+      <details id="shadowCypher" hidden>
+        <summary>Reproduce this attacker view in Neo4j Browser / Bloom</summary>
+        <pre><code id="shadowCypherText"></code></pre>
+        <button class="ghost" id="shadowCopyCypher">Copy Cypher</button>
+      </details>
+    </div>
   </section>
 
     <div class="panel feature-panel backend-panel">
@@ -120,6 +183,7 @@
   </section>
   <footer>THREXA / GRAPH-BASED CYBER THREAT INVESTIGATION <span>Evidence-first security analytics</span></footer>
 </main>
+<script src="{{ url_for('static', filename='shadow.js') }}"></script>
 <script src="{{ url_for('static', filename='app.js') }}"></script>
 </body>
 </html>
