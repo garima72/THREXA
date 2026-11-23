@@ -1,102 +1,144 @@
-# THREXA — Think in Graphs. Hunt Smarter.
+# THREXA | Graph-Based Cybersecurity Investigation Platform
 
-**A Graph-Powered Cyber Threat Analysis Platform**
+ **From disconnected security alerts to connected investigation.**
 
-THREXA is an educational cybersecurity investigation prototype developed by **Team QUBRIX** for the HackFront India AI Builder Challenge.
+THREXA is a graph-based cybersecurity investigation and decision-support platform designed to help analysts explore security entities, understand their relationships, investigate potential impact, and prioritize their next steps.
 
-It demonstrates how graph analytics can help security analysts move beyond isolated security alerts and understand relationships between users, devices, servers, applications, and other infrastructure assets.
-
-By representing security entities as interconnected graph nodes, THREXA provides three investigation capabilities using synthetic security data.
+By representing users, devices, servers, applications, databases, and alerts as an interconnected graph, THREXA provides a unified view of security context and enables interactive graph-based investigation.
 
 ---
 
-## Core Features
+## Problem Statement
 
-### 1. Connected Alert Investigator
-- Displays sample security alerts.
-- Identifies entities referenced by individual alerts.
-- Demonstrates how alerts can be connected through shared graph entities.
-- Provides a connected view of security-related information.
+Cybersecurity analysts often struggle to investigate security alerts in complex, interconnected environments. Fragmented security information makes it difficult to understand relationships between entities, assess potential impact, trace connections, and prioritize investigations efficiently.
 
-### 2. Incident Impact Explorer
-- Select a potentially compromised device, account, or other graph node.
-- Explore its connected neighborhood across 1-hop, 2-hop, and 3-hop relationships.
-- Understand which assets may be structurally connected to the selected entity.
-- Visualize the potential scope of an incident.
+## Our Solution
 
-### 3. Attack Path & Containment Planner
-- Explore the shortest relationship path between a selected source and target.
-- Identify intermediate systems connecting potentially compromised assets to critical infrastructure.
-- Rank potential choke points using betweenness centrality.
-- Help analysts understand important connections within the infrastructure graph.
+THREXA transforms security entities, relationships, and alerts into an interactive graph-based investigation environment. It combines graph visualization, structural analysis, impact exploration, and explainable prioritization to support analysts in making more informed investigation decisions.
 
 ---
+
+## Key Features
+
+### 1. Interactive Graph Visualization
+- Visual representation of entities and relationships.
+- Interactive node selection and exploration.
+- Zoom, pan, and graph navigation.
+- Highlight relevant entities and connections.
+- Explore complex relationships visually.
+
+### 2. Alert Investigator
+- Investigate security alerts with contextual information.
+- Explore entities associated with an alert.
+- Understand connected relationships surrounding suspicious activity.
+
+### 3. Blast Radius
+Explore the potential impact of a selected entity by identifying connected entities within a specified hop distance.
+
+### 4. Attack Pathfinder
+Find and visualize a structural path between selected source and target entities, including intermediate nodes.
+
+### 5. Choke Point Analysis
+Identify structurally important entities using graph centrality analysis, helping analysts discover important connectors within the network.
+
+### 6. Shadow Graph
+Explore connected graph entities progressively, allowing analysts to investigate relationships step by step without being overwhelmed by the entire graph.
 
 ## Technology Stack
 
-| Component | Technology |
+| Technology | Role |
 |---|---|
-| Backend | Python, Flask |
-| Graph Analytics | NetworkX |
-| Frontend | HTML, CSS, JavaScript |
-| Data Storage | JSON |
-| Visualization | SVG / JavaScript |
+| Python | Core backend and analysis logic |
+| Flask | Backend framework and REST API |
+| NetworkX | Graph algorithms and structural analysis |
+| Neo4j | Graph database and relationship storage |
+| JavaScript | Frontend interaction and API communication |
+| Cytoscape.js | Interactive graph visualization |
+| HTML5 | Frontend structure |
+| CSS3 | UI styling |
+| JSON | Demo data and fallback data source |
 
 ---
 
-## Project Structure
-THREXA/
-│
-├── app.py
-├── requirements.txt
-│
-├── data/
-│   ├── graph.json
-│   └── alerts.json
-│
-├── templates/
-│   └── index.html
-│
-├── static/
-│   ├── style.css
-│   └── app.js
-│
-└── README.md
+## Architecture
 
+                ┌─────────────────────────────┐
+                │        Frontend            │
+                │      HTML / CSS / JS       │
+                │       Cytoscape.js         │
+                └──────────────┬──────────────┘
+                               │
+                         API Requests
+                               │
+                ┌──────────────▼──────────────┐
+                │       Flask Backend         │
+                │       REST Endpoints       │
+                └──────────────┬──────────────┘
+                               │
+                ┌──────────────▼──────────────┐
+                │       NetworkX Engine       │
+                │  Graph & Analysis Logic     │
+                └──────────────┬──────────────┘
+                               │
+                ┌──────────────▼──────────────┐
+                │       Graph Storage         │
+                │       Neo4j / JSON          │
+                └─────────────────────────────┘
+
+### How it works
+
+1. The analyst interacts with the THREXA interface.
+2. The frontend sends requests to the Flask backend.
+3. The backend retrieves graph data and executes analysis logic.
+4. NetworkX performs graph computations.
+5. Results are returned through APIs.
+6. Cytoscape.js updates the graph and investigation interface.
+
+
+## Graph Concepts
+
+THREXA models a security environment using:
+
+- **Nodes:** Entities such as users, laptops, servers, applications, databases, and alerts.
+- **Edges:** Relationships between entities, such as connections, access, ownership, or associations.
+- **Paths:** Sequences of connected entities.
+- **Hops:** Number of connections traversed between entities.
+
+These graph structures help analysts investigate relationships and explore potential impact.
 
 ---
 
-## Getting Started
+## Installation & Setup
 
-### Requirements
-- Python 3.10 or newer
-- pip
+### Prerequisites
+
+- Python 3.10+
+- Git
+- Neo4j database (for Neo4j integration)
 
 ### 1. Clone the repository
 
 ```bash
-git clone YOUR_GITHUB_REPOSITORY_URL
-cd YOUR_REPOSITORY_FOLDER
+git clone https://github.com/YOUR_USERNAME/THREXA.git
+cd THREXA
 ```
-
-Replace the placeholders with your actual GitHub repository URL and folder name.
 
 ### 2. Create a virtual environment
 
 ```bash
-python -m venv .venv
+python -m venv venv
 ```
 
 Activate it:
 
-**Windows PowerShell**
-```powershell
-.venv\Scripts\Activate.ps1
+**Windows**
+```bash
+venv\Scripts\activate
 ```
 
-**macOS / Linux**
+**Linux / macOS**
 ```bash
-source .venv/bin/activate
+source venv/bin/activate
 ```
 
 ### 3. Install dependencies
@@ -105,113 +147,71 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-### 4. Run the application
+### 4. Configure environment variables
+
+Create a `.env` file using the project's `.env.example` template.
+
+Add your Neo4j connection configuration and credentials as required by the project.
+
+> Never commit credentials, API keys, database passwords, or your `.env` file.
+
+### 5. Run the application
 
 ```bash
 python app.py
 ```
 
-### 5. Open in your browser
-
-Visit:
-
-http://127.0.0.1:5000
+Open the local URL displayed in your terminal to access THREXA.
 
 ---
 
-## Demo Walkthrough
+## Demo Data
 
-Follow these steps to explore THREXA:
+THREXA currently supports a demonstration environment using synthetic cybersecurity entities, relationships, and alerts.
 
-1. Launch the application and explore the sample security graph.
-2. Open the **Connected Alert Investigator** and review the sample alerts and their associated entities.
-3. Select `D01` (Laptop-07) in the Incident Impact Explorer.
-4. Click **Calculate Blast Radius** to explore the connected neighborhood by hop count.
-5. Select `DB01` (Payroll DB) as the target in the Attack Path Finder.
-6. Click **Find Relationship Path** to explore the shortest relationship path.
-7. Open **Potential Choke Points** to view nodes ranked by betweenness centrality.
+The demo environment allows users to explore graph analysis features without requiring access to a real organization's security infrastructure.
 
 ---
 
-## API Endpoints
+## Project Limitations
 
-| Method | Endpoint | Description |
-|---|---|---|
-| GET | `/api/graph` | Returns graph nodes and edges |
-| GET | `/api/alerts` | Returns synthetic security alerts |
-| GET | `/api/incident` | Provides alert/entity correlation information |
-| GET | `/api/blast-radius/<node_id>` | Calculates the neighborhood up to three hops |
-| GET | `/api/attack-path?source=D01&target=DB01` | Finds the shortest undirected relationship path |
-| GET | `/api/choke-points` | Returns nodes ranked by betweenness centrality |
+THREXA is currently a  prototype and decision-support tool.
 
----
-
-## Graph Data Model
-
-THREXA represents an organization's digital infrastructure as a graph.
-
-**Node types include:**
-- Users
-- Devices
-- Servers
-- Applications
-- Databases
-- IP addresses
-
-**Relationship types include:**
-- `uses`
-- `connects_to`
-- `admin_session`
-- `hosts`
-- `reads_from`
-
-The graph structure and sample alerts are stored in JSON files under the `data/` directory.
-
-This makes the prototype easy to inspect, modify, and extend.
-
----
-
-## Important Limitations
-
-THREXA is currently an educational prototype, not a production cybersecurity platform.
-
-- All telemetry, alerts, and graph relationships are synthetic and created for demonstration.
-- Relationships are treated as traversable in either direction for blast-radius and shortest-path demonstrations.
-- A discovered graph path does not prove that an attacker has traversed or can exploit that path.
-- Betweenness centrality measures structural importance in a graph; it is not a validated security-risk score.
-- Alert correlation uses shared entity IDs in a fixed sample dataset, not a trained detection model.
-- The prototype does not connect to live SIEM, EDR, CMDB, identity-provider, or network systems.
-- It does not execute automated containment actions.
-- Its outputs should not be used to make real-world security or containment decisions.
+- Uses synthetic demonstration data.
+- Does not currently ingest live enterprise SIEM/EDR telemetry.
+- Graph paths represent structural connections, not confirmed attacker movement.
+- Blast Radius represents modeled reachability, not confirmed compromise.
+- Analyst Augmentation uses explainable heuristic scoring, not a trained machine-learning model or probability of compromise.
+- Blast Shield performs hypothetical graph analysis, not real-world remediation.
+- Enterprise-scale performance and production security have not yet been fully validated.
 
 ---
 
 ## Future Scope
 
-Potential improvements include:
-
-- Direction-aware and time-stamped graph relationships.
-- Integration with authorized SIEM, EDR, CMDB, and identity telemetry.
-- More advanced attack-path analysis.
-- Improved anomaly detection and alert correlation.
-- Analyst feedback and investigation history.
-- Authentication and role-based access control.
-- Automated testing and performance optimization.
+- Integration with SIEM, EDR, IAM, and cloud security data sources.
+- Real-time security event ingestion.
+- Authentication, authorization, and role-based access control.
+- Advanced graph filtering, clustering, and scalable graph exploration.
+- Improved threat prioritization and contextual risk analysis.
+- Audit logging and secure deployment.
+- Benchmarking with larger, realistic security graphs.
 
 ---
 
 ## Team
 
-**Developed by Team QUBRIX**
+**Team QUBRIX**
 
-Project: **THREXA**
-
-Hackathon: **HackFront India — AI Builder Challenge**
-
-**Think in Graphs. Hunt Smarter.**
+Built as a cybersecurity graph investigation project.
 
 ---
 
-<p align="center">
-  Built with curiosity, collaboration, and a passion for cybersecurity.
-</p>
+## Disclaimer
+
+THREXA is an investigation-support prototype intended for educational, demonstration, and research purposes. Its outputs are based on the graph data provided and should not be interpreted as proof of compromise, exploitability, or actual attacker movement. Security decisions should be validated by qualified analysts.
+
+---
+
+**THREXA — Explore connections. Understand impact. Investigate smarter.**
+
